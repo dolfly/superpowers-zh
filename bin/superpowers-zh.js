@@ -32,32 +32,33 @@ function countDirs(dir) {
   return readdirSync(dir, { withFileTypes: true }).filter(e => e.isDirectory()).length;
 }
 
+function scanSkillEntries(skillsDir) {
+  const entries = [];
+  if (!existsSync(skillsDir)) return entries;
+  for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const skillFile = resolve(skillsDir, entry.name, 'SKILL.md');
+    if (!existsSync(skillFile)) continue;
+    const content = readFileSync(skillFile, 'utf8');
+    const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+    if (!fmMatch) continue;
+    const nameMatch = fmMatch[1].match(/^name:\s*(.+)$/m);
+    const descMatch = fmMatch[1].match(/^description:\s*["']?(.+?)["']?\s*$/m);
+    if (nameMatch) {
+      entries.push({
+        name: nameMatch[1].trim(),
+        desc: descMatch ? descMatch[1].trim() : '',
+      });
+    }
+  }
+  return entries;
+}
+
 function generateTraeBootstrapRule(projectDir) {
   const rulesDir = resolve(projectDir, '.trae', 'rules');
   mkdirSync(rulesDir, { recursive: true });
 
-  // 扫描已安装的 skills，读取 name 和 description
-  const skillsDir = resolve(projectDir, '.trae', 'skills');
-  const skillEntries = [];
-  if (existsSync(skillsDir)) {
-    for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const skillFile = resolve(skillsDir, entry.name, 'SKILL.md');
-      if (!existsSync(skillFile)) continue;
-      const content = readFileSync(skillFile, 'utf8');
-      const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
-      if (!fmMatch) continue;
-      const nameMatch = fmMatch[1].match(/^name:\s*(.+)$/m);
-      const descMatch = fmMatch[1].match(/^description:\s*["']?(.+?)["']?\s*$/m);
-      if (nameMatch) {
-        skillEntries.push({
-          name: nameMatch[1].trim(),
-          desc: descMatch ? descMatch[1].trim() : '',
-        });
-      }
-    }
-  }
-
+  const skillEntries = scanSkillEntries(resolve(projectDir, '.trae', 'skills'));
   const skillTable = skillEntries.map(s => `| ${s.name} | ${s.desc} |`).join('\n');
 
   const rule = `---
@@ -91,6 +92,123 @@ ${skillTable}
   const rulePath = resolve(rulesDir, 'superpowers-zh.md');
   writeFileSync(rulePath, rule, 'utf8');
   console.log(`  ✅ Trae: bootstrap rule -> ${rulePath}`);
+}
+
+function generateAntigravityBootstrap(projectDir) {
+  const skillEntries = scanSkillEntries(resolve(projectDir, '.antigravity', 'skills'));
+  const skillList = skillEntries.map(s => `- **${s.name}**: ${s.desc}`).join('\n');
+
+  const content = `# Superpowers-ZH 中文增强版
+
+本项目已安装 superpowers-zh 技能框架（${skillEntries.length} 个 skills）。
+
+## 核心规则
+
+1. **收到任务时，先检查是否有匹配的 skill** — 哪怕只有 1% 的可能性也要检查
+2. **设计先于编码** — 收到功能需求时，先用 brainstorming skill 做需求分析
+3. **测试先于实现** — 写代码前先写测试（TDD）
+4. **验证先于完成** — 声称完成前必须运行验证命令
+
+## 可用 Skills
+
+Skills 位于 \`.antigravity/skills/\` 目录，每个 skill 有独立的 \`SKILL.md\` 文件。
+
+${skillList}
+
+## 如何使用
+
+当任务匹配某个 skill 时，读取对应的 \`.antigravity/skills/<skill-name>/SKILL.md\` 并严格遵循其流程。
+`;
+
+  // 写入 .antigravity/rules.md（不覆盖用户已有的 GEMINI.md / AGENTS.md）
+  const rulePath = resolve(projectDir, '.antigravity', 'rules.md');
+  writeFileSync(rulePath, content, 'utf8');
+  console.log(`  ✅ Antigravity: bootstrap rule -> ${rulePath}`);
+}
+
+function generateAiderBootstrap(projectDir) {
+  const skillEntries = scanSkillEntries(resolve(projectDir, '.aider', 'skills'));
+  const skillList = skillEntries.map(s => `- **${s.name}**: ${s.desc}`).join('\n');
+
+  const content = `# Superpowers-ZH 工作方法论
+
+本项目使用 superpowers-zh 技能框架（${skillEntries.length} 个 skills）。
+
+## 核心规则
+
+1. **收到任务时，先检查是否有匹配的 skill** — 哪怕只有 1% 的可能性也要检查
+2. **设计先于编码** — 收到功能需求时，先用 brainstorming skill 做需求分析
+3. **测试先于实现** — 写代码前先写测试（TDD）
+4. **验证先于完成** — 声称完成前必须运行验证命令
+
+## 可用 Skills
+
+Skills 位于 \`.aider/skills/\` 目录，每个 skill 有独立的 \`SKILL.md\` 文件。
+
+${skillList}
+
+## 如何使用
+
+当任务匹配某个 skill 时，读取对应的 \`.aider/skills/<skill-name>/SKILL.md\` 并严格遵循其流程。
+`;
+
+  // 写入 CONVENTIONS.md（Aider 原生支持自动加载此文件）
+  // 如果已有 CONVENTIONS.md，追加而不覆盖
+  const convPath = resolve(projectDir, 'CONVENTIONS.md');
+  if (existsSync(convPath)) {
+    const existing = readFileSync(convPath, 'utf8');
+    if (!existing.includes('superpowers-zh')) {
+      writeFileSync(convPath, existing + '\n\n' + content, 'utf8');
+      console.log(`  ✅ Aider: 追加 skills 引用 -> ${convPath}`);
+    } else {
+      console.log(`  ✅ Aider: CONVENTIONS.md 已包含 superpowers-zh 引用`);
+    }
+  } else {
+    writeFileSync(convPath, content, 'utf8');
+    console.log(`  ✅ Aider: bootstrap -> ${convPath}`);
+  }
+}
+
+function generateGeminiBootstrap(projectDir) {
+  const skillEntries = scanSkillEntries(resolve(projectDir, '.gemini', 'skills'));
+  const skillList = skillEntries.map(s => `- **${s.name}**: ${s.desc}`).join('\n');
+
+  const content = `# Superpowers-ZH 中文增强版
+
+本项目已安装 superpowers-zh 技能框架（${skillEntries.length} 个 skills）。
+
+## 核心规则
+
+1. **收到任务时，先检查是否有匹配的 skill** — 哪怕只有 1% 的可能性也要检查
+2. **设计先于编码** — 收到功能需求时，先用 brainstorming skill 做需求分析
+3. **测试先于实现** — 写代码前先写测试（TDD）
+4. **验证先于完成** — 声称完成前必须运行验证命令
+
+## 可用 Skills
+
+Skills 位于 \`.gemini/skills/\` 目录，每个 skill 有独立的 \`SKILL.md\` 文件。
+
+${skillList}
+
+## 如何使用
+
+当任务匹配某个 skill 时，读取对应的 \`.gemini/skills/<skill-name>/SKILL.md\` 并严格遵循其流程。
+`;
+
+  // 写入 GEMINI.md（如果已存在则追加）
+  const geminiPath = resolve(projectDir, 'GEMINI.md');
+  if (existsSync(geminiPath)) {
+    const existing = readFileSync(geminiPath, 'utf8');
+    if (!existing.includes('superpowers-zh')) {
+      writeFileSync(geminiPath, existing + '\n\n' + content, 'utf8');
+      console.log(`  ✅ Gemini CLI: 追加 skills 引用 -> ${geminiPath}`);
+    } else {
+      console.log(`  ✅ Gemini CLI: GEMINI.md 已包含 superpowers-zh 引用`);
+    }
+  } else {
+    writeFileSync(geminiPath, content, 'utf8');
+    console.log(`  ✅ Gemini CLI: bootstrap -> ${geminiPath}`);
+  }
 }
 
 function showHelp() {
@@ -141,6 +259,18 @@ function install() {
 
       if (target.name === 'Trae') {
         generateTraeBootstrapRule(PROJECT_DIR);
+      }
+
+      if (target.name === 'Antigravity') {
+        generateAntigravityBootstrap(PROJECT_DIR);
+      }
+
+      if (target.name === 'Aider') {
+        generateAiderBootstrap(PROJECT_DIR);
+      }
+
+      if (target.name === 'Gemini CLI') {
+        generateGeminiBootstrap(PROJECT_DIR);
       }
 
       if (target.name === 'Claude Code' && existsSync(AGENTS_SRC)) {
