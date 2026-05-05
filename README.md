@@ -141,6 +141,8 @@ cd /your/project
 npx superpowers-zh
 ```
 
+> ⚠️ **不要在主目录（`~`）下跑**。v1.2.1 起会拒绝并提示，老版本会把 skills 和 `CLAUDE.md` 等 bootstrap 文件写到你的 home 目录，污染所有项目。如已误装见下文「卸载 / 误装清理」。
+
 ### 方式二：手动安装
 
 ```bash
@@ -191,6 +193,30 @@ cp -r superpowers-zh/skills /your/project/.claw/skills       # Claw Code（Rust 
 | Claw Code | `.claw/skills/*/SKILL.md` | Rust 版 CLI agent，兼容 Claude Code 的 SKILL.md 格式 |
 
 > **详细安装指南**：[Kiro](docs/README.kiro.md) · [DeerFlow](docs/README.deerflow.md) · [Trae](docs/README.trae.md) · [Antigravity](docs/README.antigravity.md) · [VS Code](docs/README.vscode.md) · [Codex](docs/README.codex.md) · [OpenCode](docs/README.opencode.md) · [OpenClaw](docs/README.openclaw.md) · [Windsurf](docs/README.windsurf.md) · [Gemini CLI](docs/README.gemini-cli.md) · [Aider](docs/README.aider.md) · [Qwen Code](docs/README.qwen.md) · [Hermes Agent](docs/README.hermes.md)
+
+### 卸载 / 误装清理（v1.2.1+）
+
+```bash
+cd /your/project          # 或 cd ~ 如果误装到了主目录
+npx superpowers-zh@latest --uninstall
+```
+
+会做这些：
+
+- 删除所有装过的 skill 目录（`.claude/skills/`、`.trae/skills/` 等）
+- 删除独立 bootstrap 文件（`.trae/rules/superpowers-zh.md`、`.antigravity/rules.md`）
+- 清理追加到 `CLAUDE.md` / `HERMES.md` / `GEMINI.md` / `CONVENTIONS.md` 里的 superpowers-zh 段，**保留你自己写的内容**
+
+数据安全说明：v1.2.1 起，安装会把追加内容包在 `<!-- superpowers-zh:begin/end -->` 哨兵注释之间，卸载按哨兵精确切除。识别不可靠时跳过 + 警告，**绝不会误删用户内容**。
+
+其他参数：
+
+| 参数 | 用途 |
+|---|---|
+| `--tool <name>` | 自动检测不到时显式指定（cursor / trae / hermes / 等） |
+| `--force` | 允许在主目录(~)安装（默认拒绝，**不建议**） |
+| `--uninstall` | 卸载当前目录下的 superpowers-zh |
+| `--help` / `--version` | 帮助 / 版本 |
 
 ---
 

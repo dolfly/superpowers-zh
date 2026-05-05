@@ -56,6 +56,17 @@ cd /your/project
 npx superpowers-zh
 ```
 
+## 卸载 / 误装清理
+
+如果不小心在主目录（`~`）误跑了 `npx superpowers-zh`，会把 skills 和 `.trae/rules/superpowers-zh.md` 写到你的 home。v1.2.1 起会主动拒绝，但老版本可能已经污染过。清理：
+
+```bash
+cd ~                                    # 或具体的项目目录
+npx superpowers-zh@latest --uninstall
+```
+
+会删除 `.trae/skills/` 下装过的 skill、`.trae/rules/superpowers-zh.md`，并清理 `CLAUDE.md` 等文件里的 superpowers-zh 段（保留你自己写的内容）。
+
 ## 获取帮助
 
 - 提交 Issue：https://github.com/jnMetaCode/superpowers-zh/issues
