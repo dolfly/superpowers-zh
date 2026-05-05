@@ -10,6 +10,9 @@
   "bin": {
     "superpowers-zh": "bin/superpowers-zh.js"
   },
+  "scripts": {
+    "version": "node scripts/sync-plugin-version.js && git add .claude-plugin/plugin.json .cursor-plugin/plugin.json"
+  },
   "files": [
     "bin/",
     "skills/",
